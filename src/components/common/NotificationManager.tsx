@@ -10,6 +10,13 @@ export default function NotificationManager() {
   const { expenses } = useExpenses();
   const lastSent = useRef("");
 
+  // Request permission as soon as user enables notifications
+  useEffect(() => {
+    if (settings?.notifyEnabled && "Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, [settings?.notifyEnabled]);
+
   useEffect(() => {
     if (!settings?.notifyEnabled || !settings?.notifyTime) return;
     if (!("Notification" in window)) return;
@@ -19,7 +26,8 @@ export default function NotificationManager() {
       const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
       const today = now.toISOString().split("T")[0];
 
-      if (currentTime === settings.notifyTime && lastSent.current !== today) {
+      // Use >= so we don't miss it if the check fires a few seconds after the exact minute
+      if (currentTime >= settings.notifyTime && lastSent.current !== today) {
         lastSent.current = today;
         const todayExpenses = expenses.filter((e) => isToday(e.date));
         const total = todayExpenses.reduce((s, e) => s + e.amount, 0);
@@ -31,13 +39,10 @@ export default function NotificationManager() {
             badge: "/icon.svg",
             tag: "daily-summary",
           });
-        } else if (Notification.permission === "default") {
-          Notification.requestPermission();
         }
       }
     };
 
-    // Check immediately, then every 30 seconds
     check();
     const interval = setInterval(check, 30000);
     return () => clearInterval(interval);
