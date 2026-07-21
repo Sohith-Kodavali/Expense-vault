@@ -75,7 +75,7 @@ export default function SettingsPage() {
         <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-4">Notifications</h3>
         <div className="flex items-center justify-between mb-4">
           <div><p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Daily Spending Alert</p><p className="text-xs text-gray-400">Browser notification at set time</p></div>
-          <button onClick={() => { updateSettings({ notifyEnabled: !settings?.notifyEnabled }); if (!settings?.notifyEnabled && "Notification" in window && Notification.permission === "default") { Notification.requestPermission(); } }} className={`w-14 h-8 rounded-full transition-colors relative ${settings?.notifyEnabled ? "bg-violet-600" : "bg-gray-300"}`}>
+          <button onClick={async () => { if (!settings?.notifyEnabled && "Notification" in window && Notification.permission === "default") { await Notification.requestPermission(); } updateSettings({ notifyEnabled: !settings?.notifyEnabled }); }} className={`w-14 h-8 rounded-full transition-colors relative ${settings?.notifyEnabled ? "bg-violet-600" : "bg-gray-300"}`}>
             <motion.div animate={{ x: settings?.notifyEnabled ? 24 : 2 }} transition={{ type: "spring", stiffness: 500, damping: 30 }} className="w-6 h-6 rounded-full bg-white shadow-md absolute top-1" />
           </button>
         </div>
