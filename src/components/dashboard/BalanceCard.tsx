@@ -9,18 +9,19 @@ import { formatCurrency } from "@/lib/utils";
 
 interface BalanceCardProps {
   balance: number;
+  income: number;
   currency: string;
   onSetBalance: (amount: number) => void;
 }
 
-export default function BalanceCard({ balance, currency, onSetBalance }: BalanceCardProps) {
+export default function BalanceCard({ balance, income, currency, onSetBalance }: BalanceCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [amount, setAmount] = useState("");
 
   const handleSave = () => {
     const val = parseFloat(amount);
     if (!isNaN(val) && val > 0) {
-      onSetBalance(balance + val);
+      onSetBalance(income + val);
       setIsOpen(false);
       setAmount("");
     }
@@ -29,7 +30,7 @@ export default function BalanceCard({ balance, currency, onSetBalance }: Balance
   return (
     <>
       <StatsCard
-        label="Current Balance"
+        label="Available"
         value={formatCurrency(balance, currency)}
         icon={
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2">
@@ -46,8 +47,8 @@ export default function BalanceCard({ balance, currency, onSetBalance }: Balance
       <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Add Income" size="sm">
         <div className="space-y-4">
           <div className="text-center py-2">
-            <p className="text-xs text-gray-400 dark:text-gray-500">Current Balance</p>
-            <p className="text-2xl font-extrabold text-gray-900 dark:text-white tabular-nums">{formatCurrency(balance, currency)}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">Total Income</p>
+            <p className="text-2xl font-extrabold text-gray-900 dark:text-white tabular-nums">{formatCurrency(income, currency)}</p>
           </div>
           <Input
             label="Income Amount"

@@ -28,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem("expensevault-theme");if(t==="dark")document.documentElement.classList.add("dark")}catch(e){}})()` }} />
+        <script dangerouslySetInnerHTML={{ __html: `(function(){if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js').catch(function(){})}})()` }} />
       </head>
       <body className="min-h-screen flex flex-col bg-[var(--background)] transition-colors relative">
         <UserProvider>
