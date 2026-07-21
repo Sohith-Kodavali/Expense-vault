@@ -19,8 +19,8 @@ export default function BalanceCard({ balance, currency, onSetBalance }: Balance
 
   const handleSave = () => {
     const val = parseFloat(amount);
-    if (!isNaN(val) && val >= 0) {
-      onSetBalance(val);
+    if (!isNaN(val) && val > 0) {
+      onSetBalance(balance + val);
       setIsOpen(false);
       setAmount("");
     }
@@ -43,15 +43,19 @@ export default function BalanceCard({ balance, currency, onSetBalance }: Balance
         delay={0.05}
         onClick={() => { setAmount(""); setIsOpen(true); }}
       />
-      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Set Balance" size="sm">
+      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Add Income" size="sm">
         <div className="space-y-4">
+          <div className="text-center py-2">
+            <p className="text-xs text-gray-400 dark:text-gray-500">Current Balance</p>
+            <p className="text-2xl font-extrabold text-gray-900 dark:text-white tabular-nums">{formatCurrency(balance, currency)}</p>
+          </div>
           <Input
-            label="Balance Amount"
+            label="Income Amount"
             type="number"
             placeholder="0.00"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            min="0"
+            min="1"
             step="0.01"
             icon={<span className="text-sm font-bold text-emerald-500">{currency}</span>}
             autoFocus
