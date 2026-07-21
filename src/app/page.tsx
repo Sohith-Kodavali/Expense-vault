@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useSettings } from "@/context/SettingsContext";
 import StatsCard from "@/components/dashboard/StatsCard";
+import BalanceCard from "@/components/dashboard/BalanceCard";
 import RecentExpenses from "@/components/dashboard/RecentExpenses";
 import BudgetProgress from "@/components/dashboard/BudgetProgress";
 import { CategoryPieChart, MonthlyBarChart } from "@/components/charts/ExpenseCharts";
@@ -19,7 +20,7 @@ import { formatCurrency, getMonthKey, isToday, isThisWeek, isThisMonth, isThisYe
 import { DEFAULT_CATEGORIES } from "@/lib/types";
 
 export default function DashboardPage() {
-  const { expenses, loading, budget, toggleFavorite, togglePin, loadBudget, updateBudget } = useExpenses();
+  const { expenses, loading, budget, balance, updateBalance, toggleFavorite, togglePin, loadBudget, updateBudget } = useExpenses();
   const { currency, categories } = useSettings();
   const { displayName } = useUser();
   const monthKey = getMonthKey();
@@ -71,7 +72,7 @@ export default function DashboardPage() {
         <StatsCard label="Total Expenses" value={formatCurrency(totalExpenses, currency)} icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>} color="" bg="bg-rose-50 dark:bg-rose-900/20" delay={0.2} />
         <StatsCard label="Highest Expense" value={highestExpense ? formatCurrency(highestExpense.amount, currency) : formatCurrency(0, currency)} icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#eab308" strokeWidth="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>} color="" bg="bg-yellow-50 dark:bg-yellow-900/20" delay={0.25} />
         <StatsCard label="Lowest Expense" value={lowestExpense ? formatCurrency(lowestExpense.amount, currency) : formatCurrency(0, currency)} icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>} color="" bg="bg-cyan-50 dark:bg-cyan-900/20" delay={0.3} />
-        <StatsCard label="Expense Count" value={expenses.length.toString()} icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5h6"/></svg>} color="" bg="bg-indigo-50 dark:bg-indigo-900/20" delay={0.35} />
+        <BalanceCard balance={balance?.amount ?? 0} currency={currency} onSetBalance={(amt) => updateBalance(amt)} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

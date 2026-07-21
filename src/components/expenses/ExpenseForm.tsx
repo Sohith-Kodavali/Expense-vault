@@ -6,14 +6,16 @@ import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import Button from "@/components/ui/Button";
 import { useSettings } from "@/context/SettingsContext";
-import type { Expense, ExpenseCategory } from "@/lib/types";
+import type { Expense, ExpenseCategory, PredefinedExpense } from "@/lib/types";
 import { DEFAULT_CATEGORIES, PAYMENT_APPS } from "@/lib/types";
+import { formatCurrency } from "@/lib/utils";
 
 interface ExpenseFormProps {
   initialData?: Partial<Expense>;
   onSubmit: (data: Omit<Expense, "id" | "userId" | "createdAt" | "updatedAt" | "isFavorite" | "isPinned">) => void;
   onCancel: () => void;
   loading: boolean;
+  predefinedExpenses?: PredefinedExpense[];
 }
 
 interface FormErrors {
@@ -21,8 +23,8 @@ interface FormErrors {
   amount?: string;
 }
 
-export default function ExpenseForm({ initialData, onSubmit, onCancel, loading }: ExpenseFormProps) {
-  const { categories } = useSettings();
+export default function ExpenseForm({ initialData, onSubmit, onCancel, loading, predefinedExpenses }: ExpenseFormProps) {
+  const { categories, currency: settingsCurrency } = useSettings();
 
   const [name, setName] = useState(initialData?.name || "");
   const [amount, setAmount] = useState(initialData?.amount ? String(initialData.amount) : "");
@@ -69,8 +71,32 @@ export default function ExpenseForm({ initialData, onSubmit, onCancel, loading }
     });
   };
 
+  const applyPrefill = (pe: PredefinedExpense) => {
+    setName(pe.name);
+    setAmount(String(pe.amount));
+    setCategory(pe.category);
+    setPaymentMode(pe.paymentMode);
+    if (pe.paymentApp) setPaymentApp(pe.paymentApp);
+    if (pe.notes) setNotes(pe.notes);
+    setErrors({});
+  };
+
   return (
     <motion.form onSubmit={handleSubmit} className="space-y-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+      {predefinedExpenses && predefinedExpenses.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {predefinedExpenses.map((pe) => (
+            <button
+              key={pe.id}
+              type="button"
+              onClick={() => applyPrefill(pe)}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-800/40 border border-violet-200 dark:border-violet-800 transition-colors"
+            >
+              {formatCurrency(pe.amount, settingsCurrency)} · {pe.name}
+            </button>
+          ))}
+        </div>
+      )}
       <Input label="Expense Name" placeholder="e.g. Grocery shopping"
         value={name} onChange={(e) => { setName(e.target.value); if (errors.name) setErrors((p) => ({ ...p, name: undefined })); }}
         error={errors.name} />

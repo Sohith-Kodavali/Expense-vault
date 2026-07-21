@@ -4,13 +4,20 @@ import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { useSettings } from "@/context/SettingsContext";
 import { useToast } from "@/context/ToastContext";
-import { CURRENCIES } from "@/lib/types";
+import { CURRENCIES, DEFAULT_CATEGORIES, PAYMENT_APPS } from "@/lib/types";
+import { formatCurrency } from "@/lib/utils";
 
 export default function SettingsPage() {
-  const { theme, currency, updateSettings, categories, updateCategories, settings } = useSettings();
+  const { theme, currency, updateSettings, categories, updateCategories, settings, predefinedExpenses, updatePredefinedExpenses } = useSettings();
   const { showToast } = useToast();
   const [newCategory, setNewCategory] = useState("");
   const [newIcon, setNewIcon] = useState("📌");
+  const [preName, setPreName] = useState("");
+  const [preAmount, setPreAmount] = useState("");
+  const [preCategory, setPreCategory] = useState(DEFAULT_CATEGORIES[0].value);
+  const [prePaymentMode, setPrePaymentMode] = useState<"online" | "offline">("online");
+  const [prePaymentApp, setPrePaymentApp] = useState("supermoney");
+  const [preNotes, setPreNotes] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const addCategory = () => {
@@ -22,6 +29,15 @@ export default function SettingsPage() {
   };
 
   const removeCategory = (val: string) => { updateCategories(categories.filter((c) => c.value !== val)); showToast("Category removed", "info"); };
+
+  const addPredefined = () => {
+    if (!preName.trim() || !preAmount || parseFloat(preAmount) <= 0) { showToast("Name and valid amount required", "error"); return; }
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    updatePredefinedExpenses([...predefinedExpenses, { id, name: preName.trim(), amount: parseFloat(preAmount), category: preCategory, paymentMode: prePaymentMode, paymentApp: prePaymentMode === "online" ? prePaymentApp : undefined, notes: preNotes.trim() }]);
+    setPreName(""); setPreAmount(""); setPreNotes(""); showToast("Predefined expense added", "success");
+  };
+  const removePredefined = (id: string) => { updatePredefinedExpenses(predefinedExpenses.filter(p => p.id !== id)); showToast("Template removed", "info"); };
+
   const exportBackup = () => {
     const blob = new Blob([JSON.stringify({ version: "1.0", exportedAt: new Date().toISOString(), categories }, null, 2)], { type: "application/json" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `settings-backup-${new Date().toISOString().split("T")[0]}.json`; a.click(); showToast("Backup exported", "success");
@@ -93,6 +109,52 @@ export default function SettingsPage() {
           <input value={newCategory} onChange={(e) => setNewCategory(e.target.value)} placeholder="Category name" className="flex-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus:border-violet-400" onKeyDown={(e) => { if (e.key === "Enter") addCategory(); }} />
           <input value={newIcon} onChange={(e) => setNewIcon(e.target.value)} placeholder="Icon" className="w-16 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none text-center focus:border-violet-400" maxLength={2} />
           <button onClick={addCategory} className="px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700">Add</button>
+        </div>
+      </div>
+
+      {/* Predefined Expenses */}
+      <div className="glass-card rounded-2xl p-5">
+        <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-1">Predefined Expenses</h3>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Quick-add templates for frequent expenses</p>
+        <div className="flex flex-wrap gap-2 mb-4">
+          {predefinedExpenses.map((pe) => (
+            <span key={pe.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+              {formatCurrency(pe.amount, currency)} · {pe.name}
+              <button onClick={() => removePredefined(pe.id)} className="w-4 h-4 rounded-full flex items-center justify-center text-gray-400 hover:text-rose-500 hover:bg-rose-50 ml-0.5">✕</button>
+            </span>
+          ))}
+          {predefinedExpenses.length === 0 && <span className="text-xs text-gray-400 italic">No templates yet</span>}
+        </div>
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <input value={preName} onChange={(e) => setPreName(e.target.value)} placeholder="Name"
+              className="flex-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus:border-violet-400" />
+            <input value={preAmount} onChange={(e) => setPreAmount(e.target.value)} placeholder="Amount" type="number" min="0" step="0.01"
+              className="w-28 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus:border-violet-400" />
+          </div>
+          <div className="flex gap-2">
+            <select value={preCategory} onChange={(e) => setPreCategory(e.target.value)}
+              className="flex-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus:border-violet-400">
+              {(categories.length > 0 ? categories : DEFAULT_CATEGORIES).map(c => (
+                <option key={c.value} value={c.value}>{c.icon} {c.label}</option>
+              ))}
+            </select>
+            <select value={prePaymentMode} onChange={(e) => setPrePaymentMode(e.target.value as "online" | "offline")}
+              className="w-28 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus:border-violet-400">
+              <option value="online">💳 Online</option>
+              <option value="offline">💵 Cash</option>
+            </select>
+          </div>
+          {prePaymentMode === "online" && (
+            <select value={prePaymentApp} onChange={(e) => setPrePaymentApp(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus:border-violet-400">
+              {PAYMENT_APPS.map(a => <option key={a.value} value={a.value}>{a.icon} {a.label}</option>)}
+            </select>
+          )}
+          <input value={preNotes} onChange={(e) => setPreNotes(e.target.value)} placeholder="Notes (optional)"
+            className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus:border-violet-400" />
+          <button onClick={addPredefined}
+            className="px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700">Add Template</button>
         </div>
       </div>
 

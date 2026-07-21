@@ -16,7 +16,7 @@ const steps = [
   },
   {
     title: "Track Every Rupee",
-    description: "Add expenses in seconds. Swipe to favorite or delete. Quick-add from + button anywhere.",
+    description: "Add expenses in seconds. Tap to favorite or delete. Quick-add from + button anywhere.",
     icon: (
       <motion.div animate={{ rotate: [0, 5, -5, 0] }} transition={{ repeat: Infinity, duration: 4 }} className="w-20 h-20 rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-2xl shadow-emerald-400/30">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>

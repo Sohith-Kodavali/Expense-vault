@@ -4,6 +4,7 @@ import { useState } from "react";
 import Modal from "@/components/ui/Modal";
 import ExpenseForm from "@/components/expenses/ExpenseForm";
 import { useExpenses } from "@/hooks/useExpenses";
+import { useSettings } from "@/context/SettingsContext";
 import { useToast } from "@/context/ToastContext";
 import type { Expense } from "@/lib/types";
 import Confetti from "@/components/common/Confetti";
@@ -18,6 +19,7 @@ interface QuickAddModalProps {
 
 export default function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
   const { add } = useExpenses();
+  const { predefinedExpenses } = useSettings();
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
 
@@ -49,7 +51,7 @@ export default function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
       <Confetti trigger={showConfetti} onDone={() => setShowConfetti(false)} />
       <SuccessRipple trigger={showRipple} onDone={() => setShowRipple(false)} />
       <Modal isOpen={isOpen} onClose={onClose} title="Quick Add Expense" size="lg">
-        <ExpenseForm onSubmit={handleSubmit} onCancel={onClose} loading={loading} />
+        <ExpenseForm onSubmit={handleSubmit} onCancel={onClose} loading={loading} predefinedExpenses={predefinedExpenses} />
       </Modal>
     </>
   );

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import type { Expense, Budget } from "@/lib/types";
+import type { Expense, Budget, Balance } from "@/lib/types";
 import { useUser } from "@/context/UserContext";
 
 function storageKey(userId: string) { return `expensevault-expenses-${userId}`; }
 function budgetKey(userId: string) { return `expensevault-budget-${userId}`; }
+function balanceKey(userId: string) { return `expensevault-balance-${userId}`; }
 
 function load<T>(key: string): T | null {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
@@ -20,12 +21,14 @@ export function useExpenses() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [budget, setBudget] = useState<Budget | null>(null);
+  const [balance, setBalance] = useState<Balance | null>(null);
   const [deletedExpense, setDeletedExpense] = useState<Expense | null>(null);
   const [undoTimeout, setUndoTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setExpenses(load<Expense[]>(storageKey(userId)) || []);
     setBudget(load<Budget>(budgetKey(userId)));
+    setBalance(load<Balance>(balanceKey(userId)));
     setLoading(false);
   }, [userId]);
 
@@ -99,5 +102,11 @@ export function useExpenses() {
     save(budgetKey(userId), b);
   };
 
-  return { expenses, loading, budget, deletedExpense, add, update, remove, undoDelete, toggleFavorite, togglePin, loadBudget, updateBudget, refresh: () => {} };
+  const updateBalance = async (amount: number) => {
+    const b: Balance = { id: userId, userId, amount, createdAt: Date.now(), updatedAt: Date.now() };
+    setBalance(b);
+    save(balanceKey(userId), b);
+  };
+
+  return { expenses, loading, budget, balance, deletedExpense, add, update, remove, undoDelete, toggleFavorite, togglePin, loadBudget, updateBudget, updateBalance, refresh: () => {} };
 }

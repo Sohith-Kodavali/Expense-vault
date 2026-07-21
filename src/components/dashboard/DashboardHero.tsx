@@ -4,7 +4,7 @@ import { useState } from "react";
 import Modal from "@/components/ui/Modal";
 
 const features = [
-  { icon: "💰", title: "Expense Tracking", desc: "Add, edit, delete expenses with swipe gestures. Quick-add modal from anywhere.", color: "from-violet-500 to-indigo-500" },
+  { icon: "💰", title: "Expense Tracking", desc: "Add, edit, delete expenses with one tap. Quick-add modal from anywhere.", color: "from-violet-500 to-indigo-500" },
   { icon: "📊", title: "Reports & Charts", desc: "Monthly breakdowns, category pie charts, bar graphs, line trends.", color: "from-blue-500 to-cyan-500" },
   { icon: "👥", title: "Lends Manager", desc: "Track money lent to friends. Record returns. Never lose track.", color: "from-emerald-500 to-teal-500" },
   { icon: "📅", title: "Expense Calendar", desc: "Visual calendar showing daily spending. Tap any day for details.", color: "from-rose-500 to-pink-500" },
@@ -15,7 +15,7 @@ const features = [
   { icon: "💳", title: "Payment Modes", desc: "Online/offline tracking. Choose from 7 payment apps including SuperMoney.", color: "from-orange-500 to-red-500" },
   { icon: "📄", title: "PDF Export", desc: "Generate beautiful monthly PDF reports. Also export CSV and JSON.", color: "from-teal-500 to-green-500" },
   { icon: "🎵", title: "Sound & Haptics", desc: "14 sound effects. Phone vibration on key actions. Premium feedback.", color: "from-indigo-500 to-blue-500" },
-  { icon: "🔄", title: "Swipe Navigation", desc: "Swipe left/right to move between tabs. Swipe expense cards to favorite/delete.", color: "from-yellow-500 to-amber-500" },
+  { icon: "↔️", title: "Quick Actions", desc: "Favorite, pin, and delete expenses with inline buttons. Undo delete via toast.", color: "from-yellow-500 to-amber-500" },
 ];
 
 export default function DashboardHero({ name }: { name: string }) {
@@ -44,7 +44,7 @@ export default function DashboardHero({ name }: { name: string }) {
                 <div key={i} className="w-8 h-8 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-sm border-2 border-white/30">{e}</div>
               ))}
             </div>
-            <span className="text-xs text-violet-200">← Swipe to navigate tabs →</span>
+            <span className="text-xs text-violet-200">Your all-in-one expense tracker</span>
           </div>
         </div>
       </div>

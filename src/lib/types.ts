@@ -52,6 +52,24 @@ export interface Budget {
   updatedAt: number;
 }
 
+export interface Balance {
+  id: string;
+  userId: string;
+  amount: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface PredefinedExpense {
+  id: string;
+  name: string;
+  amount: number;
+  category: ExpenseCategory;
+  paymentMode: "online" | "offline";
+  paymentApp?: string;
+  notes?: string;
+}
+
 export interface UserSettings {
   id: string;
   userId: string;
