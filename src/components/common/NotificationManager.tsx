@@ -12,15 +12,14 @@ export default function NotificationManager() {
   const expensesRef = useRef(expenses);
   const currencyRef = useRef(currency);
 
-  // Keep refs in sync without triggering effect recreation
   expensesRef.current = expenses;
   currencyRef.current = currency;
 
   useEffect(() => {
     if (!settings?.notifyEnabled || !settings?.notifyTime) return;
-    if (!("Notification" in window)) return;
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
 
-    const fire = () => {
+    const fire = async () => {
       try {
         const now = new Date();
         const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
@@ -31,15 +30,17 @@ export default function NotificationManager() {
           const todayExpenses = expensesRef.current.filter((e) => isToday(e.date));
           const total = todayExpenses.reduce((s, e) => s + e.amount, 0);
 
-          new Notification("ExpenseVault - Daily Summary", {
+          const reg = await navigator.serviceWorker.ready;
+          await reg.showNotification("ExpenseVault - Daily Summary", {
             body: `Today: ${todayExpenses.length} expense${todayExpenses.length !== 1 ? "s" : ""} · ${formatCurrency(total, currencyRef.current)} spent`,
-            icon: "/icon.svg",
+            icon: "/icon-192.png",
             badge: "/icon-192.png",
             tag: "daily-summary",
+            vibrate: [200, 100, 200],
           });
         }
       } catch {
-        // silently ignore — browser may reject notifications
+        // silently ignore
       }
     };
 

@@ -105,10 +105,17 @@ export default function SettingsPage() {
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus:border-violet-400 mb-4" />
             <div className="flex items-center justify-between">
               <PermissionStatus />
-              <button onClick={() => {
+              <button onClick={async () => {
                 if ("Notification" in window && Notification.permission === "granted") {
-                  new Notification("ExpenseVault - Test", { body: "If you see this, notifications work!", icon: "/icon.svg" });
-                  showToast("Test notification sent", "success");
+                  try {
+                    const reg = await navigator.serviceWorker?.ready;
+                    if (reg) {
+                      await reg.showNotification("ExpenseVault", { body: "Notifications are working!", icon: "/icon-192.png", vibrate: [200, 100, 200] });
+                      showToast("Test notification sent", "success");
+                    }
+                  } catch {
+                    showToast("Failed to send notification", "error");
+                  }
                 } else {
                   showToast("Notifications not allowed — check permissions", "error");
                 }
