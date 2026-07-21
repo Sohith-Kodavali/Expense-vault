@@ -7,6 +7,14 @@ import { useToast } from "@/context/ToastContext";
 import { CURRENCIES, DEFAULT_CATEGORIES, PAYMENT_APPS } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 
+function PermissionStatus() {
+  if (typeof window === "undefined") return null;
+  if (!("Notification" in window)) return <span className="text-xs text-gray-400">Not supported in this browser</span>;
+  if (Notification.permission === "granted") return <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">✅ Allowed</span>;
+  if (Notification.permission === "denied") return <span className="text-xs text-rose-600 dark:text-rose-400 font-semibold">⚠️ Blocked — reset in browser settings</span>;
+  return <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold">🔔 Prompt will appear on toggle</span>;
+}
+
 export default function SettingsPage() {
   const { theme, currency, updateSettings, categories, updateCategories, settings, predefinedExpenses, updatePredefinedExpenses } = useSettings();
   const { showToast } = useToast();
@@ -75,7 +83,18 @@ export default function SettingsPage() {
         <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-4">Notifications</h3>
         <div className="flex items-center justify-between mb-4">
           <div><p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Daily Spending Alert</p><p className="text-xs text-gray-400">Browser notification at set time</p></div>
-          <button onClick={async () => { if (!settings?.notifyEnabled && "Notification" in window && Notification.permission === "default") { await Notification.requestPermission(); } updateSettings({ notifyEnabled: !settings?.notifyEnabled }); }} className={`w-14 h-8 rounded-full transition-colors relative ${settings?.notifyEnabled ? "bg-violet-600" : "bg-gray-300"}`}>
+          <button onClick={async () => {
+            if (!settings?.notifyEnabled && "Notification" in window) {
+              if (Notification.permission === "default") {
+                const result = await Notification.requestPermission();
+                if (result === "denied") { showToast("Notifications blocked — reset in browser settings", "error"); return; }
+                if (result !== "granted") { showToast("Permission not granted", "error"); return; }
+              } else if (Notification.permission === "denied") {
+                showToast("Notifications are blocked — reset in browser settings", "error"); return;
+              }
+            }
+            updateSettings({ notifyEnabled: !settings?.notifyEnabled });
+          }} className={`w-14 h-8 rounded-full transition-colors relative ${settings?.notifyEnabled ? "bg-violet-600" : "bg-gray-300"}`}>
             <motion.div animate={{ x: settings?.notifyEnabled ? 24 : 2 }} transition={{ type: "spring", stiffness: 500, damping: 30 }} className="w-6 h-6 rounded-full bg-white shadow-md absolute top-1" />
           </button>
         </div>
@@ -83,7 +102,20 @@ export default function SettingsPage() {
           <div>
             <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Reminder Time</label>
             <input type="time" value={settings?.notifyTime || "21:00"} onChange={(e) => updateSettings({ notifyTime: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus:border-violet-400" />
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm outline-none focus:border-violet-400 mb-4" />
+            <div className="flex items-center justify-between">
+              <PermissionStatus />
+              <button onClick={() => {
+                if ("Notification" in window && Notification.permission === "granted") {
+                  new Notification("ExpenseVault - Test", { body: "If you see this, notifications work!", icon: "/icon.svg" });
+                  showToast("Test notification sent", "success");
+                } else {
+                  showToast("Notifications not allowed — check permissions", "error");
+                }
+              }} className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-400 hover:bg-violet-100">
+                Test Notification
+              </button>
+            </div>
           </div>
         )}
       </div>
