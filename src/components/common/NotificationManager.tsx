@@ -10,13 +10,6 @@ export default function NotificationManager() {
   const { expenses } = useExpenses();
   const lastSent = useRef("");
 
-  // Request permission as soon as user enables notifications
-  useEffect(() => {
-    if (settings?.notifyEnabled && "Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
-    }
-  }, [settings?.notifyEnabled]);
-
   useEffect(() => {
     if (!settings?.notifyEnabled || !settings?.notifyTime) return;
     if (!("Notification" in window)) return;
