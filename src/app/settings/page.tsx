@@ -7,8 +7,14 @@ import { useToast } from "@/context/ToastContext";
 import { CURRENCIES, DEFAULT_CATEGORIES, PAYMENT_APPS } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 
+function isIOS() {
+  if (typeof navigator === "undefined") return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
 function PermissionStatus() {
   if (typeof window === "undefined") return null;
+  if (isIOS()) return <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold">⚠️ iOS — notifications limited. Add to Home Screen</span>;
   if (!("Notification" in window)) return <span className="text-xs text-gray-400">Not supported in this browser</span>;
   if (Notification.permission === "granted") return <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">✅ Allowed</span>;
   if (Notification.permission === "denied") return <span className="text-xs text-rose-600 dark:text-rose-400 font-semibold">⚠️ Blocked — reset in browser settings</span>;
@@ -110,7 +116,7 @@ export default function SettingsPage() {
                   try {
                     const reg = await navigator.serviceWorker?.ready;
                     if (reg) {
-                      await reg.showNotification("ExpenseVault", { body: "Notifications are working!", icon: "/icon-192.png", vibrate: [200, 100, 200] });
+                      await reg.showNotification("ExpenseVault", { body: "Notifications are working!", icon: "/icon-192.png", vibrate: [200, 100, 200] } as any);
                       showToast("Test notification sent", "success");
                     }
                   } catch {

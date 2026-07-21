@@ -1,53 +1,90 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useSettings } from "@/context/SettingsContext";
 import { useExpenses } from "@/hooks/useExpenses";
 import { isToday, formatCurrency } from "@/lib/utils";
 
+function getLastSentKey() {
+  return "expensevault-last-notification-date";
+}
+
+/** Parse "HH:MM" to total minutes. Returns -1 if invalid. */
+function timeToMinutes(t: string): number {
+  const parts = t.split(":");
+  if (parts.length !== 2) return -1;
+  const h = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  if (isNaN(h) || isNaN(m)) return -1;
+  return h * 60 + m;
+}
+
 export default function NotificationManager() {
   const { settings, currency } = useSettings();
   const { expenses } = useExpenses();
-  const lastSent = useRef("");
   const expensesRef = useRef(expenses);
   const currencyRef = useRef(currency);
 
   expensesRef.current = expenses;
   currencyRef.current = currency;
 
+  const tryFire = useCallback(async () => {
+    try {
+      if (!settings?.notifyEnabled || !settings?.notifyTime) return;
+      if (typeof window === "undefined") return;
+      if (!("Notification" in window) || Notification.permission !== "granted") return;
+      if (!("serviceWorker" in navigator)) return;
+
+      const now = new Date();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const targetMinutes = timeToMinutes(settings.notifyTime);
+      if (targetMinutes < 0) return;
+
+      const today = now.toISOString().split("T")[0];
+      const lastSentDate = localStorage.getItem(getLastSentKey());
+      if (lastSentDate === today) return;
+
+      // Fire if the target time has passed (even if we missed the exact minute)
+      if (currentMinutes < targetMinutes) return;
+
+      const todayExpenses = expensesRef.current.filter((e) => isToday(e.date));
+      const total = todayExpenses.reduce((s, e) => s + e.amount, 0);
+
+      const reg = await navigator.serviceWorker.ready;
+      await reg.showNotification("ExpenseVault - Daily Summary", {
+        body: `Today: ${todayExpenses.length} expense${todayExpenses.length !== 1 ? "s" : ""} · ${formatCurrency(total, currencyRef.current)} spent`,
+        icon: "/icon-192.png",
+        badge: "/icon-192.png",
+        tag: "daily-summary",
+        vibrate: [200, 100, 200],
+      } as any);
+
+      localStorage.setItem(getLastSentKey(), today);
+    } catch {
+      // silently ignore
+    }
+  }, [settings?.notifyEnabled, settings?.notifyTime]);
+
   useEffect(() => {
-    if (!settings?.notifyEnabled || !settings?.notifyTime) return;
-    if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
+    tryFire();
 
-    const fire = async () => {
-      try {
-        const now = new Date();
-        const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-        const today = now.toISOString().split("T")[0];
-
-        if (currentTime === settings.notifyTime && lastSent.current !== today) {
-          lastSent.current = today;
-          const todayExpenses = expensesRef.current.filter((e) => isToday(e.date));
-          const total = todayExpenses.reduce((s, e) => s + e.amount, 0);
-
-          const reg = await navigator.serviceWorker.ready;
-          await reg.showNotification("ExpenseVault - Daily Summary", {
-            body: `Today: ${todayExpenses.length} expense${todayExpenses.length !== 1 ? "s" : ""} · ${formatCurrency(total, currencyRef.current)} spent`,
-            icon: "/icon-192.png",
-            badge: "/icon-192.png",
-            tag: "daily-summary",
-            vibrate: [200, 100, 200],
-          });
-        }
-      } catch {
-        // silently ignore
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        tryFire();
       }
     };
 
-    fire();
-    const interval = setInterval(fire, 10000);
-    return () => clearInterval(interval);
-  }, [settings?.notifyEnabled, settings?.notifyTime]);
+    document.addEventListener("visibilitychange", onVisible);
+
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") tryFire();
+    }, 30000);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      clearInterval(interval);
+    };
+  }, [tryFire]);
 
   return null;
 }
